@@ -1,20 +1,2 @@
-# Aident
-Aident detects crime behaviours and recognises criminal suspects in videos using AWS technology. 
-This project is awarded as the 1st place winner at [AWS Hackdays 2019](https://aws.agorize.com/en/challenges/indonesia-2019)
-
-### Demo
-- https://youtu.be/ouTdvoKeZaE
-- http://aident.wedyzec4mz.ap-northeast-2.elasticbeanstalk.com (we temporary shut down this server)
-- https://www.facebook.com/aidentbot
-
-### Architecture Diagram
-Our plan is to build both stream and batch video analysis. With batch video analysis finished, we will start to build the stream video analysis in the next phase.
-
-#### a. Target Implementation
-![architecture](https://github.com/johannesridho/aident/blob/master/README_files/Aident%20-%20Target%20Architecture.png)
-
-#### b. Current Implementation
-![architecture](https://github.com/johannesridho/aident/blob/master/README_files/Aident%20-%20Current%20Architecture.png)
-
-### How to Use This Code
-To be able to use this code, the AWSs need to be configured as seen in the architecture diagram. This code only contains client app (which need to be deployed to Elastic Beanstalk or any similar technology) and Lambda functions. 
+# Citiv
+Citiv detects crime behaviours and recognises known criminals in videos powered with MongoDB technologies. This product is based on our previous product, Aident. 
