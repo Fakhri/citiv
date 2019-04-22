@@ -1,5 +1,10 @@
 var express = require('express');
 var exphbs = require('express-handlebars');
+const {
+    Stitch,
+    RemoteMongoClient,
+    AnonymousCredential,
+} = require('mongodb-stitch-server-sdk');
 var app = express();
 var scripts = [{ script: '/js/script.js' }];
 require('dotenv').config();
@@ -38,7 +43,7 @@ var upload = multer({
       cb(null, file.originalname.replace(/\s+/g, '-'))
     }
   })
-})
+});
 
 // Express routes
 app.get('/', (req, res, next) => {
@@ -111,3 +116,25 @@ app.use((req,res) => {
 app.listen(process.env.PORT, () => {
   console.log('Listening on localhost:' + process.env.PORT);
 })
+
+function stitchExample() {
+    const client = Stitch.initializeDefaultAppClient('citiv-zzbsj')
+    const db = client.getServiceClient(RemoteMongoClient.factory, 'citiv').db('citiv')
+
+    client.auth.loginWithCredential(new AnonymousCredential()).then(user =>
+        // add a document to collection
+        db.collection('recognition').insertOne({
+            "owner_id": user.id,
+            "name": "thanos",
+            "video": "avenger-fight.jpg",
+        })
+    ).then(() =>
+        // query a collection
+        db.collection('recognition').find({}, { limit: 100}).asArray()
+    ).then(docs => {
+        console.log("Found docs", docs)
+        console.log("[MongoDB Stitch] Connected to Stitch")
+    }).catch(err => {
+        console.error(err)
+    });
+}
