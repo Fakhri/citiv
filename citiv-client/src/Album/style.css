@@ -1,0 +1,13 @@
+.content.album.title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.content.album.list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.item-name {
+  flex-grow: 1;
+}
