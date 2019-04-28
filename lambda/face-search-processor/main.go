@@ -23,6 +23,7 @@ type Configuration struct {
 	Region                 string
 	TargetSnsTopicArn      string
 	FbMessengerAccessToken string
+	StitchWebHookUrl       string
 }
 
 type SnsMessage struct {
@@ -47,6 +48,11 @@ type BroadcastMessageRequest struct {
 	Tag               string `json:"tag"`
 }
 
+type Recognition struct {
+	Criminals []string `json:"criminals"`
+	JobId     string   `json:"job_id"`
+}
+
 func main() {
 	lambda.Start(FaceSearchProcessor)
 }
@@ -67,6 +73,7 @@ func FaceSearchProcessor(ctx context.Context, event events.SNSEvent) (string, er
 		Region:                 os.Getenv("REGION"),
 		TargetSnsTopicArn:      os.Getenv("TARGET_SNS_TOPIC_ARN"),
 		FbMessengerAccessToken: os.Getenv("FB_MESSENGER_ACCESS_TOKEN"),
+		StitchWebHookUrl:       os.Getenv("STITCH_WEB_HOOK_URL"),
 	}
 
 	log.Printf("start GetFaceSearch")
@@ -91,17 +98,21 @@ func FaceSearchProcessor(ctx context.Context, event events.SNSEvent) (string, er
 	var strBuilder strings.Builder
 	strBuilder.WriteString(fmt.Sprintf("Analysis result for video with job id: %s\n", jobId))
 
+	var criminals []string
+
 	if len(criminalFacesMap) == 0 {
 		strBuilder.WriteString("There is no criminal suspect in this video")
 	} else {
 		strBuilder.WriteString("Detected criminal suspects:\n")
 		for key, val := range criminalFacesMap {
 			strBuilder.WriteString(fmt.Sprintf("name: %s - similarity: %f\n", key, val))
+			criminals = append(criminals, key)
 		}
 	}
 
 	message := strBuilder.String()
 	log.Println(message)
+	publishToStitch(config, criminals, jobId)
 	publishToSns(config, message)
 	broadcastToFbMessenger(config, message)
 
@@ -124,6 +135,35 @@ func getFaceSearchResult(config Configuration, jobId string) (*rekognition.GetFa
 	}
 
 	return result, nil
+}
+
+func publishToStitch(config Configuration, criminals []string, jobId string) {
+	log.Print("start publishToStitch")
+
+	var stitchWebHook string
+	if config.StitchWebHookUrl != "" {
+		stitchWebHook = config.StitchWebHookUrl
+	} else {
+		stitchWebHook = "https://webhooks.mongodb-stitch.com/api/client/v2.0/app/citiv-zzbsj/service/saveRecognisedCriminals/incoming_webhook/saveRecognisedCriminals"
+	}
+
+	req := Recognition{
+		Criminals: criminals,
+		JobId:     jobId,
+	}
+	payload, err := json.Marshal(req)
+
+	res, err := http.Post(stitchWebHook, "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer res.Body.Close()
+
+	responseBytes, err := ioutil.ReadAll(res.Body)
+	log.Printf("received publishToStitch response: %s, status code: %d", string(responseBytes), res.StatusCode)
+
+	log.Print("finished publishToStitch")
 }
 
 func publishToSns(config Configuration, message string) error {
