@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type Configuration struct {
@@ -51,6 +52,12 @@ type BroadcastMessageRequest struct {
 type Recognition struct {
 	Criminals []string `json:"criminals"`
 	JobId     string   `json:"job_id"`
+	CctvId    string   `json:"cctv_id"`
+	Latitude  float64  `json:"latitude"`
+	Longitude float64  `json:"longitude"`
+	Timestamp int64    `json:"timestamp"`
+	Country   string   `json:"country"`
+	City      string   `json:"city"`
 }
 
 func main() {
@@ -150,6 +157,12 @@ func publishToStitch(config Configuration, criminals []string, jobId string) {
 	req := Recognition{
 		Criminals: criminals,
 		JobId:     jobId,
+		CctvId:    "monas",
+		Latitude:  -6.1753871,
+		Longitude: 106.8249641,
+		Timestamp: time.Now().Unix(),
+		Country:   "indonesia",
+		City:      "jakarta",
 	}
 	payload, err := json.Marshal(req)
 
