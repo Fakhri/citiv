@@ -17,11 +17,9 @@ export default props => {
   const [isFetching, setIsFetching] = useState(false);
 
   useEffect(() => {
-    let error = null;
-
-    setIsFetching(true);
-
     const fetchData = async () => {
+      setIsFetching(true);
+      
       try {
         const response = await axios.request({
           method: "get",
