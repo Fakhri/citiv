@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
 
-import { Button, Layout, Upload, Icon, Progress, List, message } from "antd";
+import { Layout, Icon, List, message } from "antd";
 
 import Header from "../Header";
 import NavigationButtons from "../NavigationButtons";
@@ -19,7 +19,7 @@ export default props => {
   useEffect(() => {
     const fetchData = async () => {
       setIsFetching(true);
-      
+
       try {
         const response = await axios.request({
           method: "get",
@@ -27,7 +27,7 @@ export default props => {
         });
 
         if (response.data.album) {
-          setAlbum(response.data.album);
+          setAlbum(response.data.album.slice(0, 5));
         }
       } catch (e) {
         message.error("An error occured.");
@@ -44,11 +44,9 @@ export default props => {
       <Layout>
         <Header />
 
-        <Content className="content album title">Report History</Content>
-
         <Content className="content album list">
           {isFetching ? (
-            <div class="center">
+            <div className="center">
               <Icon
                 style={{ fontSize: 40, color: "#1890ff" }}
                 type="sync"

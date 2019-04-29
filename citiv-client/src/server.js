@@ -148,6 +148,8 @@ server
     </head>
     <body>
         <div id="root">${markup}</div>
+        <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs/5.5.6/Rx.js"></script>
     </body>
 </html>`
       );
