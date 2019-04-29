@@ -9,9 +9,7 @@ yarn
 yarn start
 
 # For production
-yarn start:prod
-
-# or (also for production)
 yarn build
-node build/server.js
+
+yarn start:prod # or node build/server.js with NODE_ENV=production
 ```
