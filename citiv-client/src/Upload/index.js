@@ -57,7 +57,7 @@ export default props => {
       setVideoFile(null);
       setUploadProgress(0);
 
-      props.history.push("/album");
+      !error && props.history.push("/album");
     }, 2000);
   };
 
