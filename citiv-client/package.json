@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "license": "MIT",
   "scripts": {
-    "start": "razzle start",
+    "start": "razzle build && NODE_ENV=production node build/server.js",
     "build": "razzle build",
     "test": "razzle test --env=jsdom",
+    "start:dev": "razzle start",
     "start:prod": "NODE_ENV=production node build/server.js"
   },
   "dependencies": {
