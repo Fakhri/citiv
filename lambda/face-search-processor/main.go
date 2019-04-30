@@ -31,22 +31,18 @@ type SnsMessage struct {
 	JobId string `json:"JobId"`
 }
 
-type GetMessageCreativeIdRequest struct {
-	Messages []interface{} `json:"messages"`
+type FbSendMessageReq struct {
+	MessagingType string    `json:"messaging_type"`
+	Recipient     Recipient `json:"recipient"`
+	Message       Message   `json:"message"`
 }
 
-type SimpleFbMessengerText struct {
+type Recipient struct {
+	Id string `json:"id"`
+}
+
+type Message struct {
 	Text string `json:"text"`
-}
-
-type GetMessageCreativeIdResponse struct {
-	MessageCreativeId string `json:"message_creative_id"`
-}
-
-type BroadcastMessageRequest struct {
-	MessageCreativeId string `json:"message_creative_id"`
-	MessagingType     string `json:"messaging_type"`
-	Tag               string `json:"tag"`
 }
 
 type Recognition struct {
@@ -121,7 +117,15 @@ func FaceSearchProcessor(ctx context.Context, event events.SNSEvent) (string, er
 	log.Println(message)
 	publishToStitch(config, criminals, jobId)
 	publishToSns(config, message)
-	broadcastToFbMessenger(config, message)
+
+	var psIds []string
+	psIds = append(psIds, "2171991696252840")
+	psIds = append(psIds, "2235838546508930")
+	psIds = append(psIds, "1787173938050269")
+
+	for _, psId := range psIds {
+		sendToFb(config, message, psId)
+	}
 
 	return "success", nil
 }
@@ -197,29 +201,19 @@ func publishToSns(config Configuration, message string) error {
 	return nil
 }
 
-func broadcastToFbMessenger(config Configuration, message string) {
-	log.Print("start broadcast message to FB Messenger")
+func sendToFb(config Configuration, message string, psId string) {
+	log.Println(message)
 
-	messageCreativeId, err := getMessageCreativeId(config, message)
-	if err != nil {
-		log.Fatal(err)
+	req := FbSendMessageReq{
+		Message:       Message{Text: message},
+		MessagingType: "RESPONSE",
+		Recipient:     Recipient{Id: psId},
 	}
 
-	broadcastMessageUrl := fmt.Sprintf(
-		"https://graph.facebook.com/v2.11/me/broadcast_messages?access_token=%s",
-		config.FbMessengerAccessToken,
-	)
-
-	req := BroadcastMessageRequest{
-		MessageCreativeId: messageCreativeId,
-		MessagingType:     "MESSAGE_TAG",
-		Tag:               "NON_PROMOTIONAL_SUBSCRIPTION",
-	}
-
-	log.Println("cret", messageCreativeId)
+	url := fmt.Sprintf("https://graph.facebook.com/v3.2/me/messages?access_token=%s", config.FbMessengerAccessToken)
 
 	payload, err := json.Marshal(req)
-	res, err := http.Post(broadcastMessageUrl, "application/json", bytes.NewBuffer(payload))
+	res, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -227,42 +221,5 @@ func broadcastToFbMessenger(config Configuration, message string) {
 	defer res.Body.Close()
 
 	responseBytes, err := ioutil.ReadAll(res.Body)
-	log.Printf("received broadcast response: %s, status code: %d", string(responseBytes), res.StatusCode)
-
-	log.Print("finished broadcast message to FB Messenger")
-}
-
-func getMessageCreativeId(config Configuration, message string) (string, error) {
-	getMessageCreativeIdUrl := fmt.Sprintf(
-		"https://graph.facebook.com/v2.11/me/message_creatives?access_token=%s",
-		config.FbMessengerAccessToken,
-	)
-
-	simpleText := SimpleFbMessengerText{Text: message}
-
-	messages := []interface{}{simpleText}
-
-	req := GetMessageCreativeIdRequest{Messages: messages}
-
-	payload, err := json.Marshal(req)
-
-	res, err := http.Post(getMessageCreativeIdUrl, "application/json", bytes.NewBuffer(payload))
-	if err != nil {
-		return "", err
-	}
-
-	defer res.Body.Close()
-
-	getMessageCreativeIdResponse := GetMessageCreativeIdResponse{}
-	err = json.NewDecoder(res.Body).Decode(&getMessageCreativeIdResponse)
-	if err != nil {
-		return "", err
-	}
-
-	log.Printf(
-		"received messageCreativeId: %s, status code: %d",
-		getMessageCreativeIdResponse.MessageCreativeId, res.StatusCode,
-	)
-
-	return getMessageCreativeIdResponse.MessageCreativeId, nil
+	log.Printf("received response: %s, status code: %d", string(responseBytes), res.StatusCode)
 }
